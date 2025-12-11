@@ -213,6 +213,24 @@ AWS SES users can enable delivery status tracking by following [AWS Setup Guide]
 - `EMAIL_PROVIDER` (either `ses` or `resend`)
 - `NEXT_PUBLIC_APP_URL`
 
+### Docker build notes
+
+Next.js validates critical environment variables during the production build. Provide safe placeholders (or real values) as build arguments, then override with real secrets at runtime:
+
+```bash
+docker build \
+  --build-arg SESSION_SECRET=change-me-in-prod \
+  --build-arg MONGODB_URI=mongodb://localhost:27017/placeholder \
+  -t santa-app .
+
+docker run -p 3000:3000 \
+  -e SESSION_SECRET=your-real-secret \
+  -e MONGODB_URI=your-real-uri \
+  -e EMAIL_PROVIDER=ses \
+  -e NEXT_PUBLIC_APP_URL=https://your-domain \
+  santa-app
+```
+
 **If using AWS SES (`EMAIL_PROVIDER=ses`):**
 
 - `AWS_ACCESS_KEY_ID`
