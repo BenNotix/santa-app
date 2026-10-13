@@ -40,46 +40,53 @@ export function ParticipantsImportCard({ group }: ParticipantsImportCardProps) {
 
   const formatExample = useMemo(() => 'Name,Email\nJohn Doe,john@example.com', []);
 
-  const parseCsvContent = useCallback((content: string): ParseResult => {
-    const cleaned = content.replace(/\uFEFF/g, '').trim();
-    if (!cleaned) return { participants: [], errors: [t('csvEmptyError')] };
+  const parseCsvContent = useCallback(
+    (content: string): ParseResult => {
+      const cleaned = content.replace(/\uFEFF/g, '').trim();
+      if (!cleaned) return { participants: [], errors: [t('csvEmptyError')] };
 
-    const rows = cleaned.split(/\r?\n/).filter((row) => row.trim().length > 0);
-    if (rows.length === 0) return { participants: [], errors: [t('csvEmptyError')] };
+      const rows = cleaned.split(/\r?\n/).filter((row) => row.trim().length > 0);
+      if (rows.length === 0) return { participants: [], errors: [t('csvEmptyError')] };
 
-    const [firstRow, ...rest] = rows;
-    const hasHeader = /name/i.test(firstRow.split(/[,;]/)[0] || '') && /email/i.test(firstRow.split(/[,;]/)[1] || '');
-    const dataRows = hasHeader ? rest : rows;
+      const [firstRow, ...rest] = rows;
+      const hasHeader =
+        /name/i.test(firstRow.split(/[,;]/)[0] || '') &&
+        /email/i.test(firstRow.split(/[,;]/)[1] || '');
+      const dataRows = hasHeader ? rest : rows;
 
-    const participants: ParsedParticipant[] = [];
-    const errors: string[] = [];
-    const seenEmails = new Set<string>();
+      const participants: ParsedParticipant[] = [];
+      const errors: string[] = [];
+      const seenEmails = new Set<string>();
 
-    dataRows.forEach((row, index) => {
-      const delimiter = row.includes(';') ? ';' : ',';
-      const [rawName, rawEmail] = row.split(delimiter).map((value) => value.replace(/^\"|\"$/g, '').trim());
+      dataRows.forEach((row, index) => {
+        const delimiter = row.includes(';') ? ';' : ',';
+        const [rawName, rawEmail] = row
+          .split(delimiter)
+          .map((value) => value.replace(/^\"|\"$/g, '').trim());
 
-      if (!rawName || !rawEmail) {
-        errors.push(t('csvMissingFields', { row: index + 1 }));
-        return;
-      }
+        if (!rawName || !rawEmail) {
+          errors.push(t('csvMissingFields', { row: index + 1 }));
+          return;
+        }
 
-      if (!emailRegex.test(rawEmail)) {
-        errors.push(t('csvInvalidEmail', { email: rawEmail }));
-        return;
-      }
+        if (!emailRegex.test(rawEmail)) {
+          errors.push(t('csvInvalidEmail', { email: rawEmail }));
+          return;
+        }
 
-      const email = rawEmail.toLowerCase();
-      if (seenEmails.has(email)) {
-        return;
-      }
+        const email = rawEmail.toLowerCase();
+        if (seenEmails.has(email)) {
+          return;
+        }
 
-      seenEmails.add(email);
-      participants.push({ name: rawName, email });
-    });
+        seenEmails.add(email);
+        participants.push({ name: rawName, email });
+      });
 
-    return { participants, errors };
-  }, [t]);
+      return { participants, errors };
+    },
+    [t]
+  );
 
   const handleFileChange = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -175,9 +182,13 @@ export function ParticipantsImportCard({ group }: ParticipantsImportCardProps) {
         <div className="space-y-2">
           <Input type="file" accept=".csv" onChange={handleFileChange} />
           {selectedFileName && (
-            <p className="text-sm text-muted-foreground">{t('selectedFile', { file: selectedFileName })}</p>
+            <p className="text-sm text-muted-foreground">
+              {t('selectedFile', { file: selectedFileName })}
+            </p>
           )}
-          <p className="text-xs text-muted-foreground whitespace-pre-wrap">{t('importFormat', { example: formatExample })}</p>
+          <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+            {t('importFormat', { example: formatExample })}
+          </p>
         </div>
 
         {parseErrors.length > 0 && (
