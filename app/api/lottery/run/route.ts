@@ -22,24 +22,22 @@ export async function POST(request: NextRequest) {
     const csrfError = await validateCSRF(request);
     if (csrfError) return csrfError;
 
-    // Check authentication
-    const session = await getSession();
-    if (!session.isLoggedIn || !session.participantId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const body = await request.json();
+    const { groupId, locale: requestLocale } = runLotterySchema.parse(body);
 
     // Rate limit: 3 lottery runs per group per hour
     const rateLimitError = await rateLimit(request, {
       max: 3,
       windowSeconds: 60 * 60,
-      keyGenerator: async () =>
-        body.groupId ? `group:${body.groupId}:lottery` : null,
+      keyGenerator: async () => (groupId ? `group:${groupId}:lottery` : null),
     });
     if (rateLimitError) return rateLimitError;
 
-    const { groupId, locale: requestLocale } = runLotterySchema.parse(body);
+    // Check authentication
+    const session = await getSession();
+    if (!session.isLoggedIn || !session.participantId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     await connectDB();
 
